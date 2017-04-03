@@ -1,0 +1,47 @@
+{
+    "name": "am05mhz/RouterOS",
+    "description": "RouterOS PHP Class, with namespace and some wrappers",
+    "keywords": [
+        "routeros",
+        "mikrotik"
+    ],
+    "type": "library",
+    "support": {
+        "issues": "https://github.com/am05mhz/RouterOS/issues",
+        "source": "https://github.com/am05mhz/RouterOS"
+    },
+    "authors": [
+        {
+            "name": "Amos Setio",
+            "email": "am05mhz@gmail.com"
+        },
+        {
+            "name": "Denis Basta",
+            "email": "Denis.Basta@gmail.com"
+        },
+        {
+            "name": "Nick Barnes"
+        },
+        {
+            "name": "Ben Menking",
+            "email": "ben@infotechsc.com"
+        },
+        {
+            "name": "Jeremy Jefferson",
+            "url": "http://jeremyj.com"
+        },
+        {
+            "name": "Cristian Deluxe",
+            "url": "djcristiandeluxe@gmail.com"
+        },
+        {
+            "name": "Mikhail Moskalev",
+            "url": "mmv.rus@gmail.com"
+        }
+    ],
+    "autoload": {
+        "classmap": [
+            "src/RouterOS.php"
+        ]
+    }
+}
