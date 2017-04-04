@@ -329,7 +329,7 @@ class RouterOS{
 		return $this->command('/ip/firewall/mangle/print', $filter, !$raw);
 	}
 	
-	public function getLayer7Protocol(Array $filter = [], $raw = false)
+	public function getLayer7Protocols(Array $filter = [], $raw = false)
 	{
 		if (!$this->connected){
 			return false;
@@ -340,11 +340,6 @@ class RouterOS{
 	
 	public function addFilterRule(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/filter/add', $rule, !$raw);
-		return $resp;
-	}
-	
-	public function addAddressList(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/address-list/add', $rule, !$raw);
 		if (!$raw){
 			if (is_array($resp) and $resp[0] == '!trap'){
 				return false;
@@ -353,48 +348,103 @@ class RouterOS{
 		return $resp;
 	}
 	
-	public function addNAT(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/nat/add', $rule, !$raw);
+	public function addAddressList(Array $list, $raw = false){
+		$resp = $this->command('/ip/firewall/address-list/add', $list, !$raw);
+		if (!$raw){
+			if (is_array($resp) and $resp[0] == '!trap'){
+				return false;
+			}
+		}
 		return $resp;
 	}
 	
-	public function addMangle(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/mangle/add', $rule, !$raw);
+	public function addNAT(Array $nat, $raw = false){
+		$resp = $this->command('/ip/firewall/nat/add', $nat, !$raw);
+		if (!$raw){
+			if (is_array($resp) and $resp[0] == '!trap'){
+				return false;
+			}
+		}
 		return $resp;
 	}
 	
-	public function addLayer7Protocol(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/layer7-protocol/add', $rule, !$raw);
+	public function addMangle(Array $mangle, $raw = false){
+		$resp = $this->command('/ip/firewall/mangle/add', $mangle, !$raw);
+		if (!$raw){
+			if (is_array($resp) and $resp[0] == '!trap'){
+				return false;
+			}
+		}
+		return $resp;
+	}
+	
+	public function addLayer7Protocol(Array $proto, $raw = false){
+		$resp = $this->command('/ip/firewall/layer7-protocol/add', $proto, !$raw);
+		if (!$raw){
+			if (is_array($resp) and $resp[0] == '!trap'){
+				return false;
+			}
+		}
 		return $resp;
 	}
 
 	public function removeFilterRule(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/filter/remove', $rule, !$raw);
-		return $resp;
-	}
-	
-	public function removeAddressList(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/address-list/remove', $rule, !$raw);
 		if (!$raw){
-			//if (is_array($resp) and $resp[0] == '!trap'){
-			//	return false;
-			//}
+			if (is_array($resp) and count($resp) == 1){
+				if ($resp[0] == '!trap'){
+					return false;
+				}
+			}
 		}
 		return $resp;
 	}
 	
-	public function removeNAT(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/nat/remove', $rule, !$raw);
+	public function removeAddressList(Array $list, $raw = false){
+		$resp = $this->command('/ip/firewall/address-list/remove', $list, !$raw);
+		if (!$raw){
+			if (is_array($resp) and count($resp) == 1){
+				if ($resp[0] == '!trap'){
+					return false;
+				}
+			}
+		}
 		return $resp;
 	}
 	
-	public function removeMangle(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/mangle/remove', $rule, !$raw);
+	public function removeNAT(Array $nat, $raw = false){
+		$resp = $this->command('/ip/firewall/nat/remove', $nat, !$raw);
+		if (!$raw){
+			if (is_array($resp) and count($resp) == 1){
+				if ($resp[0] == '!trap'){
+					return false;
+				}
+			}
+		}
 		return $resp;
 	}
 	
-	public function removeLayer7Protocol(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/layer7-protocol/remove', $rule, !$raw);
+	public function removeMangle(Array $mangle, $raw = false){
+		$resp = $this->command('/ip/firewall/mangle/remove', $mangle, !$raw);
+		if (!$raw){
+			if (is_array($resp) and count($resp) == 1){
+				if ($resp[0] == '!trap'){
+					return false;
+				}
+			}
+		}
+		return $resp;
+	}
+	
+	public function removeLayer7Protocol(Array $proto, $raw = false){
+		$resp = $this->command('/ip/firewall/layer7-protocol/remove', $proto, !$raw);
+		if (!$raw){
+			if (is_array($resp) and count($resp) == 1){
+				if ($resp[0] == '!trap'){
+					return false;
+				}
+			}
+		}
 		return $resp;
 	}
 }
