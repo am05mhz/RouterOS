@@ -374,7 +374,7 @@ class RouterOS{
 	}
 	
 	public function removeAddressList(Array $rule, $raw = false){
-		$resp = $this->command('/ip/firewall/removeress-list/remove', $rule, !$raw);
+		$resp = $this->command('/ip/firewall/address-list/remove', $rule, !$raw);
 		if (!$raw){
 			//if (is_array($resp) and $resp[0] == '!trap'){
 			//	return false;
