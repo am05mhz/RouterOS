@@ -3,7 +3,7 @@
 namespace am05mhz;
 
 class RouterOS{
-    private $debug     = false;
+    public $debug     = false;
     private $connected = false;
     private $port      = 8728;
     private $ssl       = false;
@@ -23,11 +23,7 @@ class RouterOS{
     private function isIterable($var)
     {
         return $var !== null
-                && (is_array($var)
-                || $var instanceof Traversable
-                || $var instanceof Iterator
-                || $var instanceof IteratorAggregate
-                );
+                and (is_array($var) or $var instanceof Traversable or $var instanceof Iterator or $var instanceof IteratorAggregate);
     }
 	
     private function debug($text)
@@ -59,27 +55,23 @@ class RouterOS{
 
     public function connect($ip, $login, $password)
     {
-        for ($ATTEMPT = 1; $ATTEMPT <= $this->attempts; $ATTEMPT++) {
+        for ($attempt = 1; $attempt <= $this->attempts; $attempt++) {
             $this->connected = false;
-            $PROTOCOL = ($this->ssl ? 'ssl://' : '' );
+            $proto = ($this->ssl ? 'ssl://' : '' );
             $context = stream_context_create([
 					'ssl' => ['ciphers' => 'ADH:ALL', 'verify_peer' => false, 'verify_peer_name' => false]
 				]);
-            $this->debug('Connection attempt #' . $ATTEMPT . ' to ' . $PROTOCOL . $ip . ':' . $this->port . '...');
-            $this->socket = @stream_socket_client($PROTOCOL . $ip.':'. $this->port, $this->error_no, $this->error_str, $this->timeout, STREAM_CLIENT_CONNECT, $context);
+            $this->debug('Connection attempt #' . $attempt . ' to ' . $proto . $ip . ':' . $this->port . '...');
+            $this->socket = @stream_socket_client($proto . $ip.':'. $this->port, $this->error_no, $this->error_str, $this->timeout, STREAM_CLIENT_CONNECT, $context);
             if ($this->socket) {
                 socket_set_timeout($this->socket, $this->timeout);
-                $this->write('/login');
-                $RESPONSE = $this->read(false);
-                if (isset($RESPONSE[0]) && $RESPONSE[0] == '!done') {
-                    $MATCHES = array();
-                    if (preg_match_all('/[^=]+/i', $RESPONSE[1], $MATCHES)) {
-                        if ($MATCHES[0][0] == 'ret' && strlen($MATCHES[0][1]) == 32) {
-                            $this->write('/login', false);
-                            $this->write('=name=' . $login, false);
-                            $this->write('=response=00' . md5(chr(0) . $password . pack('H*', $MATCHES[0][1])));
-                            $RESPONSE = $this->read(false);
-                            if (isset($RESPONSE[0]) && $RESPONSE[0] == '!done') {
+				$resp = $this->command('/login', false, false);
+                if (isset($resp[0]) and $resp[0] == '!done') {
+                    $matches = [];
+                    if (preg_match_all('/[^=]+/i', $resp[1], $matches)) {
+                        if ($matches[0][0] == 'ret' and strlen($matches[0][1]) == 32) {
+							$resp = $this->command('/login', ['name' => $login, 'response' => '00' . md5(chr(0) . $password . pack('H*', $matches[0][1]))], false);
+                            if (isset($resp[0]) and $resp[0] == '!done') {
                                 $this->connected = true;
                                 break;
                             }
@@ -112,32 +104,32 @@ class RouterOS{
     private function parseResponse($response)
     {
         if (is_array($response)) {
-            $PARSED      = array();
-            $CURRENT     = null;
+            $parsed      = array();
+            $current     = null;
             $singlevalue = null;
             foreach ($response as $x) {
                 if (in_array($x, array('!fatal','!re','!trap'))) {
                     if ($x == '!re') {
-                        $CURRENT =& $PARSED[];
+                        $current =& $parsed[];
                     } else {
-                        $CURRENT =& $PARSED[$x][];
+                        $current =& $parsed[$x][];
                     }
                 } elseif ($x != '!done') {
-                    $MATCHES = array();
-                    if (preg_match_all('/[^=]+/i', $x, $MATCHES)) {
-                        if ($MATCHES[0][0] == 'ret') {
-                            $singlevalue = $MATCHES[0][1];
+                    $matches = array();
+                    if (preg_match_all('/[^=]+/i', $x, $matches)) {
+                        if ($matches[0][0] == 'ret') {
+                            $singlevalue = $matches[0][1];
                         }
-                        $CURRENT[$MATCHES[0][0]] = (isset($MATCHES[0][1]) ? $MATCHES[0][1] : '');
+                        $current[$matches[0][0]] = (isset($matches[0][1]) ? $matches[0][1] : '');
                     }
                 }
             }
 
-            if (empty($PARSED) && !is_null($singlevalue)) {
-                $PARSED = $singlevalue;
+            if (empty($parsed) and !is_null($singlevalue)) {
+                $parsed = $singlevalue;
             }
 
-            return $PARSED;
+            return $parsed;
         } else {
             return array();
         }
@@ -158,55 +150,55 @@ class RouterOS{
 
     private function read($parse = true)
     {
-        $RESPONSE     = array();
+        $resp     = array();
         $receiveddone = false;
         while (true) {
             // Read the first byte of input which gives us some or all of the length
             // of the remaining reply.
-            $BYTE   = ord(fread($this->socket, 1));
-            $LENGTH = 0;
+            $byte   = ord(fread($this->socket, 1));
+            $length = 0;
             // If the first bit is set then we need to remove the first four bits, shift left 8
             // and then read another byte in.
             // We repeat this for the second and third bits.
             // If the fourth bit is set, we need to remove anything left in the first byte
             // and then read in yet another byte.
-            if ($BYTE & 128) {
-                if (($BYTE & 192) == 128) {
-                    $LENGTH = (($BYTE & 63) << 8) + ord(fread($this->socket, 1));
+            if ($byte & 128) {
+                if (($byte & 192) == 128) {
+                    $length = (($byte & 63) << 8) + ord(fread($this->socket, 1));
                 } else {
-                    if (($BYTE & 224) == 192) {
-                        $LENGTH = (($BYTE & 31) << 8) + ord(fread($this->socket, 1));
-                        $LENGTH = ($LENGTH << 8) + ord(fread($this->socket, 1));
+                    if (($byte & 224) == 192) {
+                        $length = (($byte & 31) << 8) + ord(fread($this->socket, 1));
+                        $length = ($length << 8) + ord(fread($this->socket, 1));
                     } else {
-                        if (($BYTE & 240) == 224) {
-                            $LENGTH = (($BYTE & 15) << 8) + ord(fread($this->socket, 1));
-                            $LENGTH = ($LENGTH << 8) + ord(fread($this->socket, 1));
-                            $LENGTH = ($LENGTH << 8) + ord(fread($this->socket, 1));
+                        if (($byte & 240) == 224) {
+                            $length = (($byte & 15) << 8) + ord(fread($this->socket, 1));
+                            $length = ($length << 8) + ord(fread($this->socket, 1));
+                            $length = ($length << 8) + ord(fread($this->socket, 1));
                         } else {
-                            $LENGTH = ord(fread($this->socket, 1));
-                            $LENGTH = ($LENGTH << 8) + ord(fread($this->socket, 1));
-                            $LENGTH = ($LENGTH << 8) + ord(fread($this->socket, 1));
-                            $LENGTH = ($LENGTH << 8) + ord(fread($this->socket, 1));
+                            $length = ord(fread($this->socket, 1));
+                            $length = ($length << 8) + ord(fread($this->socket, 1));
+                            $length = ($length << 8) + ord(fread($this->socket, 1));
+                            $length = ($length << 8) + ord(fread($this->socket, 1));
                         }
                     }
                 }
             } else {
-                $LENGTH = $BYTE;
+                $length = $byte;
             }
 
             $_ = '';
 
             // If we have got more characters to read, read them in.
-            if ($LENGTH > 0) {
+            if ($length > 0) {
                 $_      = '';
                 $retlen = 0;
-                while ($retlen < $LENGTH) {
-                    $toread = $LENGTH - $retlen;
+                while ($retlen < $length) {
+                    $toread = $length - $retlen;
                     $_ .= fread($this->socket, $toread);
                     $retlen = strlen($_);
                 }
-                $RESPONSE[] = $_;
-                $this->debug('>>> [' . $retlen . '/' . $LENGTH . '] bytes read.');
+                $resp[] = $_;
+                $this->debug('>>> [' . $retlen . '/' . $length . '] bytes read.');
             }
 
             // If we get a !done, make a note of it.
@@ -214,24 +206,24 @@ class RouterOS{
                 $receiveddone = true;
             }
 
-            $STATUS = socket_get_status($this->socket);
-            if ($LENGTH > 0) {
-                $this->debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . ']' . $_);
+            $status = socket_get_status($this->socket);
+            if ($length > 0) {
+                $this->debug('>>> [' . $length . ', ' . $status['unread_bytes'] . ']' . $_);
             }
 
-            if ((!$this->connected && !$STATUS['unread_bytes']) || ($this->connected && !$STATUS['unread_bytes'] && $receiveddone)) {
+            if ((!$this->connected and !$status['unread_bytes']) || ($this->connected and !$status['unread_bytes'] and $receiveddone)) {
                 break;
             }
         }
 
         if ($parse) {
-            $RESPONSE = $this->parseResponse($RESPONSE);
+            $resp = $this->parseResponse($resp);
         }
 
-        return $RESPONSE;
+        return $resp;
     }
 
-    private function write($command, $param2 = true)
+    private function write($command, $continued = true)
     {
         if ($command) {
             $data = explode("\n", $command);
@@ -241,11 +233,11 @@ class RouterOS{
                 $this->debug('<<< [' . strlen($com) . '] ' . $com);
             }
 
-            if (gettype($param2) == 'integer') {
-                fwrite($this->socket, $this->encodeLength(strlen('.tag=' . $param2)) . '.tag=' . $param2 . chr(0));
-                $this->debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
-            } elseif (gettype($param2) == 'boolean') {
-                fwrite($this->socket, ($param2 ? chr(0) : ''));
+            if (gettype($continued) == 'integer') {
+                fwrite($this->socket, $this->encodeLength(strlen('.tag=' . $continued)) . '.tag=' . $continued . chr(0));
+                $this->debug('<<< [' . strlen('.tag=' . $continued) . '] .tag=' . $continued);
+            } elseif (gettype($continued) == 'boolean') {
+                fwrite($this->socket, ($continued ? chr(0) : ''));
             }
 
             return true;
@@ -254,14 +246,14 @@ class RouterOS{
         }
     }
 
-    private function comm($com, $arr = array())
+    public function command($command, $params = array(), $parseResponse = true)
     {
-        $count = count($arr);
-        $this->write($com, !$arr);
+        $count = count($params);
+        $this->write($command, !$params);
         $i = 0;
-        if ($this->isIterable($arr)) {
-            foreach ($arr as $k => $v) {
-                switch ($k[0]) {
+        if ($this->isIterable($params)){
+            foreach($params as $k => $v){
+                switch($k[0]){
                     case '?':
                         $el = "$k=$v";
                         break;
@@ -278,6 +270,96 @@ class RouterOS{
             }
         }
 
-        return $this->read();
+        return $this->read($parseResponse);
     }
+
+	private function arrayWhereFilter(Array $filter)
+	{
+		if (empty($filter)){
+			return false;
+		}
+		$tmp = [];
+		foreach($filter as $k => $v){
+			switch($k[0]){
+				case '?':
+				case '~':
+					$tmp[$k] = $v;
+					break;
+				default:
+					$tmp['?' . $k] = $v;
+					break;
+			}
+		}
+		return $tmp;
+	}
+
+	public function getFilterRules(Array $filter = [], $raw = false)
+	{
+		if (!$this->connected){
+			return false;
+		}
+		$filter = $this->arrayWhereFilter($filter);
+		return $this->command('/ip/firewall/filter/print', $filter, !$raw);
+	}
+	
+	public function getAddressLists(Array $filter = [], $raw = false)
+	{
+		if (!$this->connected){
+			return false;
+		}
+		$filter = $this->arrayWhereFilter($filter);
+		return $this->command('/ip/firewall/address-list/print', $filter, !$raw);
+	}
+	
+	public function getNAT(Array $filter = [], $raw = false)
+	{
+		if (!$this->connected){
+			return false;
+		}
+		$filter = $this->arrayWhereFilter($filter);
+		return $this->command('/ip/firewall/nat/print', $filter, !$raw);
+	}
+	
+	public function getMangle(Array $filter = [], $raw = false)
+	{
+		if (!$this->connected){
+			return false;
+		}
+		$filter = $this->arrayWhereFilter($filter);
+		return $this->command('/ip/firewall/mangle/print', $filter, !$raw);
+	}
+	
+	public function getLayer7Protocol(Array $filter = [], $raw = false)
+	{
+		if (!$this->connected){
+			return false;
+		}
+		$filter = $this->arrayWhereFilter($filter);
+		return $this->command('/ip/firewall/layer7-protocol/print', $filter, !$raw);
+	}
+	
+	public function setFilterRule(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/filter/add', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function setAddressList(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/address-list/add', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function setNAT(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/nat/add', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function setMangle(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/mangle/add', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function setLayer7Protocol(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/layer7-protocol/add', $rule, !$raw);
+		return $resp;
+	}
 }
