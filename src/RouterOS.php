@@ -338,28 +338,63 @@ class RouterOS{
 		return $this->command('/ip/firewall/layer7-protocol/print', $filter, !$raw);
 	}
 	
-	public function setFilterRule(Array $rule, $raw = false){
+	public function addFilterRule(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/filter/add', $rule, !$raw);
 		return $resp;
 	}
 	
-	public function setAddressList(Array $rule, $raw = false){
+	public function addAddressList(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/address-list/add', $rule, !$raw);
+		if (!$raw){
+			if (is_array($resp) and $resp[0] == '!trap'){
+				return false;
+			}
+		}
 		return $resp;
 	}
 	
-	public function setNAT(Array $rule, $raw = false){
+	public function addNAT(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/nat/add', $rule, !$raw);
 		return $resp;
 	}
 	
-	public function setMangle(Array $rule, $raw = false){
+	public function addMangle(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/mangle/add', $rule, !$raw);
 		return $resp;
 	}
 	
-	public function setLayer7Protocol(Array $rule, $raw = false){
+	public function addLayer7Protocol(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/layer7-protocol/add', $rule, !$raw);
+		return $resp;
+	}
+
+	public function removeFilterRule(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/filter/remove', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function removeAddressList(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/removeress-list/remove', $rule, !$raw);
+		if (!$raw){
+			//if (is_array($resp) and $resp[0] == '!trap'){
+			//	return false;
+			//}
+		}
+		return $resp;
+	}
+	
+	public function removeNAT(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/nat/remove', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function removeMangle(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/mangle/remove', $rule, !$raw);
+		return $resp;
+	}
+	
+	public function removeLayer7Protocol(Array $rule, $raw = false){
+		$resp = $this->command('/ip/firewall/layer7-protocol/remove', $rule, !$raw);
 		return $resp;
 	}
 }
