@@ -22,6 +22,7 @@ $pass = 'pass';   //rb user's password
 
 $rb = new \am05mhz\RouterOS();
 $rb->connect($ip, $user, $pass);
+```
 
 ### Get existing filter rules
 ```php
