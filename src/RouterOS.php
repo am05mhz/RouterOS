@@ -293,6 +293,24 @@ class RouterOS{
 		return $tmp;
 	}
 
+	private function arrayAddData(Array $data)
+	{
+		if (empty($data)){
+			return false;
+		}
+		$tmp = [];
+		foreach($data as $k => $v){
+			if ($v === true or $v == 'true'){
+				$tmp[$k] = 'yes';
+			} else if ($v === false or $v == 'false'){
+				$tmp[$k] = 'no';
+			} else {
+				$tmp[$k] = $v;
+			}
+		}
+		return $tmp;
+	}
+
 	public function getFilterRules(Array $filter = [], $raw = false)
 	{
 		if (!$this->connected){
@@ -341,7 +359,7 @@ class RouterOS{
 	public function addFilterRule(Array $rule, $raw = false){
 		$resp = $this->command('/ip/firewall/filter/add', $rule, !$raw);
 		if (!$raw){
-			if (is_array($resp) and $resp[0] == '!trap'){
+			if (is_array($resp) and $resp['!trap']){
 				return false;
 			}
 		}
@@ -351,7 +369,7 @@ class RouterOS{
 	public function addAddressList(Array $list, $raw = false){
 		$resp = $this->command('/ip/firewall/address-list/add', $list, !$raw);
 		if (!$raw){
-			if (is_array($resp) and $resp[0] == '!trap'){
+			if (is_array($resp) and $resp['!trap']){
 				return false;
 			}
 		}
@@ -359,9 +377,10 @@ class RouterOS{
 	}
 	
 	public function addNAT(Array $nat, $raw = false){
+		//$nat = $this->arrayAddData($nat);
 		$resp = $this->command('/ip/firewall/nat/add', $nat, !$raw);
 		if (!$raw){
-			if (is_array($resp) and $resp[0] == '!trap'){
+			if (is_array($resp) and $resp['!trap']){
 				return false;
 			}
 		}
@@ -371,7 +390,7 @@ class RouterOS{
 	public function addMangle(Array $mangle, $raw = false){
 		$resp = $this->command('/ip/firewall/mangle/add', $mangle, !$raw);
 		if (!$raw){
-			if (is_array($resp) and $resp[0] == '!trap'){
+			if (is_array($resp) and $resp['!trap']){
 				return false;
 			}
 		}
@@ -381,7 +400,7 @@ class RouterOS{
 	public function addLayer7Protocol(Array $proto, $raw = false){
 		$resp = $this->command('/ip/firewall/layer7-protocol/add', $proto, !$raw);
 		if (!$raw){
-			if (is_array($resp) and $resp[0] == '!trap'){
+			if (is_array($resp) and $resp['!trap']){
 				return false;
 			}
 		}
