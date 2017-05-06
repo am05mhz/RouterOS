@@ -53,7 +53,7 @@ class RouterOS{
         return $length;
     }
 
-    public function connect($ip, $login, $password)
+    public function connect($ip, $login, $password, $ssl = false, $port = 0)
     {
         for ($attempt = 1; $attempt <= $this->attempts; $attempt++) {
             $this->connected = false;
